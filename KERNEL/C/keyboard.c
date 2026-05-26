@@ -14,7 +14,7 @@
 #define LCTRL 0x1D
 #define BKSPC 0xE
 #define ENTER 0x1C
-char FIFOBuf[80];
+extern void PIANO_MAIN();
 const char lookup_norml[] = {
 	1,27,'1','2','3','4','5','6','7','8','9','0','-','=',
 	'\b',
@@ -71,7 +71,14 @@ volatile bool backspace = false;
 
 void keyboard_handler(void)
 {	
-	uint8_t idx = 0;
+	struct Kbd{
+		void (*pCP)(uint8_t,const char*);
+		volatile uint16_t* (*pPUTCHAR)(char);
+	};
+	struct Kbd* Kbd;
+	Kbd->pCP = &corner_print;
+	Kbd->pPUTCHAR = &vga_putchar;
+	
 	volatile uint8_t scancode_tbl = inb(PS2_SC);
 	volatile uint8_t scancode_raw;
 	
@@ -97,24 +104,27 @@ void keyboard_handler(void)
 		case ENTER:
 			coordinate_print("ENTER",75,0); break;
 		case 0x9C:
-			 kmemset((void*)0xb8096,10,0x33); break;
+			kmemset((void*)0xb8096,10,0x33); break;
+		case 0x58:
+			PIANO_MAIN();
+			break;
 		default:
 			break;
 	}
  	if(clicked && shift_clicked && scancode_tbl != LSHIFT && scancode_tbl != RSHIFT){//Shift letters
  		scancode_raw = lookup_shift[scancode_tbl]; 		
- 		corner_print(scancode_tbl,lookup_shift);
-		vga_putchar(scancode_raw);
+		(*vga_putchar)(scancode_raw);
+		(*corner_print)(scancode_tbl,lookup_shift);
  	}
  	else if(clicked && scancode_tbl != LSHIFT && scancode_tbl != LCTRL){//Normal letters
  		scancode_raw = lookup_norml[scancode_tbl];
-		*(volatile char*)0x9000 = scancode_raw;
-  		corner_print(scancode_tbl,lookup_norml);
-		vga_putchar(scancode_raw);
+		(*vga_putchar)(scancode_raw);
+		(*corner_print)(scancode_tbl,lookup_shift);
+
  	}
  	else if(clicked && shift_clicked && ctrl_clicked && scancode_tbl != LSHIFT && scancode_tbl != RSHIFT && scancode_tbl != LCTRL){//scientific
  		scancode_raw = lookup_shift[scancode_tbl];		
- 		corner_print(scancode_tbl,lookup_shift);
- 		vga_putchar(scancode_raw);
+		(*vga_putchar)(scancode_raw);
+		(*corner_print)(scancode_tbl,lookup_shift);
  	}
 }
