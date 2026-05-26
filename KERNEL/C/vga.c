@@ -115,8 +115,9 @@ void printk(char* fmt,...){
 				break;
 			case 'C':
 			case 'c':
-				array = va_arg(argp,char);
+				/*array = va_arg(argp,char);
 				printa(array);
+				*/
 				break;
 			default:
 				putch(*p);
