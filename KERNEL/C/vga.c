@@ -89,6 +89,8 @@ void putch(char c){
 
 void printk(char* fmt,...){
 	uint32_t val32;
+	char* string;
+	char array;
 	char* p;
 	va_list argp;
 	va_start(argp,fmt);
@@ -105,6 +107,16 @@ void printk(char* fmt,...){
 				break;
 			case '\n':
 				newline();
+				break;
+			case 'S':
+			case 's':
+				string = va_arg(argp,char*);
+				printa(string);
+				break;
+			case 'C':
+			case 'c':
+				array = va_arg(argp,char);
+				printa(array);
 				break;
 			default:
 				putch(*p);
