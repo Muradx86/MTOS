@@ -37,13 +37,13 @@ void kernel(void){//The kernel is a fun zone also.
 	//id_mapping();
 	*(volatile uint32_t*)0xDEADBEEF = 'A';
 	init_keyboard();
-	//mouse_init();
+	mouse_init();
 	//ShellInit();
-	//printk("hello! %u",(uint32_t)0x123);
-	/*asm volatile(".intel_syntax noprefix\n"
-				 "int 14\n"
-				 ".att_syntax prefix");
-	*/
-	//DRAW_LINE();
-	while(1){}
+	//PIANO_MAIN();
+	//PIANO_DESTROY();
+	//*(volatile uint16_t*)0xb8000=0xe9 | (0x30 << 8);
+	//readHymn();
+	init_cursor(0,15);
+	update_cursor(0,8);	
+	while(1){asm("HLT");}
 }
