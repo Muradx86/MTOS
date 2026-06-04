@@ -191,7 +191,3 @@ void drawSmiley(void){
 		*(volatile uint8_t*)0xb828a = '0';
 		*(volatile uint8_t*)0xb828b = 0x0;
 }
-void print_clock(uint64_t seconds){
-	static volatile uint16_t* clck_vga = (volatile uint16_t*)0xB8050;
-	*clck_vga = *(utoa(seconds,10)) | (COLOR << 8);
-}
