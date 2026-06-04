@@ -26,7 +26,7 @@ const char lookup_norml[] = {
 	';','"',0,
 	0,43,'z','x','c','v','b','n','m',',','.',92,
 	0,0,0,32,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0x48,0,0,0x4B,0,0x4D,0,0,0x50,0
 };
 const char lookup_shift[] = {
 	1,27,'!','@','#','$','%','^','&','*','(',')','_','+',
@@ -39,27 +39,8 @@ const char lookup_shift[] = {
 	':',0,0,
 	0,43,'Z','X','C','V','B','N','M','<','>','|',
 	'?',0,0,32,0,0,0xE3,0xE9,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0x48,0,0,0x4B,0,0x4D,0,0,0x50,0,0
 };
-static inline void kbd_wait(void){
-	uint64_t wait = 10000000;
-	while(inb(PS2_R) & 2 && wait){ }
-}
-void init_keyboard(void)
-{
-	uint8_t flags;
-
-	kbd_wait();
-	outb(PS2_SC,0x60);
-	kbd_wait();
-	flags |= (1 << 0);
-	flags = ~(1 << 1); 
-	flags |= (1 << 6);
-	kbd_wait();
-	outb(PS2_R,flags);
-
-	coordinate_print("[SYSTEM] PS/2 Keyboard Initialized",0,0);
-}
 static inline void corner_print(uint8_t scancode,const char* tbl)
 {
 	*(volatile uint8_t*)CORNER8 = *(tbl + scancode);

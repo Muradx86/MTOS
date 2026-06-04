@@ -37,7 +37,7 @@ void newline(void){
 		update_cursor(column,line);
 	}
 }
-volatile uint16_t* vga_putchar(char c){
+volatile uint16_t* vga_putchar(char c){//Mostly used for keyboard.
 	static volatile uint16_t* videomem = (volatile uint16_t*)0xb8280;
 	static volatile uint32_t vmem_dummy = 0xb8280;
 
@@ -55,6 +55,26 @@ volatile uint16_t* vga_putchar(char c){
 			if(line < 0)
 				line = -line;
 			update_cursor(column-1,line+4);
+			break;
+		case 0x4B:
+			column--;
+			if(column == 0){
+				line--;
+				column = 79;
+			}
+			break;
+		case 0x4D:
+			column++;
+			if(column == 79){
+				line++;
+				column = 0;
+			}
+			break;
+		case 0x48:
+			line--;
+			break;
+		case 0x50:
+			line++;
 			break;
 		default:
 			videomem[((1 << 4) + (1 << 6)) * line + column++] = c | (COLOR << 8);
@@ -138,7 +158,7 @@ void printk(char* fmt,...){
 }
 void coordinate_print(const char* s,uint32_t x,uint32_t y){
 	volatile uint16_t* videomem = (volatile uint16_t*)0xb8000;
-	uint8_t color = 0x8f;
+	uint8_t color = 0x8F;
 	if(*s == ' ') color = 0x30;
 	while(*s){
 		videomem[((1 << 6) + (1 << 4)) * y + x++] = *s++ | (color << 8);
