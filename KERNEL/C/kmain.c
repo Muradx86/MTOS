@@ -1,14 +1,3 @@
-/*__attribute__((section(".multiboot")))
-unsigned int multiboot_header[] = {
-    0x1BADB002,
-    0x0,
-    -(0x1BADB002)
-};
-*/
-// 8/02/2026 - first worked
-
-/* VGA addres calculation - *(vga + width * y + x)*/
-
 #include "C/idt.h"
 #include <stdint.h>
 #include "C/vga.h"
