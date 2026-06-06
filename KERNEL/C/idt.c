@@ -1,10 +1,11 @@
 #include <stdint.h>
-#include "idt.h"		//for global functions & register struct
-#include "port.h"		//for i/o
-#include "vga.h"		//for print
-// 08/02/2026 - first worked
+#include "idt.h"			
+#include "port.h"		
+#include "vga.h"		
 
-extern void irq33(void); extern void irq34(void);
+// 08/02/2026 - first worke
+extern void remap_pic();
+extern void irq33(void); extern void irq45(void);
 extern void irq32(void); 
 extern void isr0(void);  extern void isr11(void); extern void isr12(void);
 extern void isr8(void);	 extern void isr13(void); extern void isr14(void);
@@ -24,13 +25,13 @@ struct idt_entry{
 struct idt_entry idt[256];
 
 void set_gate(uint32_t handler,uint8_t vector){
-    if(vector < 21){goto trap;}
-    else{goto interrupt;}
+    if(vector < 21) goto trap;
+    else goto interrupt;
 
 //32_bit trap ---> 0x8F
 trap:
     idt[vector].offset_low = handler & 0xFFFF;
-    idt[vector].selector = 0x10;
+    idt[vector].selector = 0x8;
     idt[vector].zero = 0;
     idt[vector].flags = 0x8F;
     idt[vector].offset_high = handler >> 16;
@@ -39,14 +40,16 @@ trap:
 //32_bit interrupt ---> 0x8E
 interrupt:
     idt[vector].offset_low = handler & 0xFFFF;
-    idt[vector].selector = 0x10;
+    idt[vector].selector = 0x8;
     idt[vector].zero = 0;
     idt[vector].flags = 0x8E;
     idt[vector].offset_high = handler >> 16;
     return;
 }
 
-void enable_interrupts(void){asm volatile("sti");} void disable_interrupts(void){asm volatile("cli");} void idle_state(void){asm volatile("hlt");}
+inline void enable_interrupts(void){asm volatile("sti");}
+inline void disable_interrupts(void){asm volatile("cli");} 
+inline void idle_state(void){asm volatile("hlt");}
 
 void pic_remap(void){
     outb(0x20,0x11);//ICW1
@@ -71,7 +74,8 @@ void pic_remap(void){
 
 void load_idt(void){
 	disable_interrupts();
-	pic_remap();
+	//pic_remap();
+	remap_pic();
 	struct idt_pointer{
 		uint16_t limit; 
 		uint32_t base;
@@ -90,7 +94,7 @@ void load_idt(void){
 	set_gate((uint32_t)isr18,(uint8_t)0x12);
 	set_gate((uint32_t)irq32,(uint8_t)0x20);
 	set_gate((uint32_t)irq33,(uint8_t)0x21);
-	set_gate((uint32_t)irq34,(uint8_t)0x22);
+	//set_gate((uint32_t)irq45,(uint8_t)0x2D);
 	set_gate((uint32_t)isr4,(uint8_t)0x4);
 	set_gate((uint32_t)isr7,(uint8_t)0x7);
 	set_gate((uint32_t)isr10,(uint8_t)0xa);
