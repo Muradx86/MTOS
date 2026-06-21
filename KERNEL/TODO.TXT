@@ -1,0 +1,10 @@
+OS:
+multitasking[]
+heap[]
+mouse[]
+shell[]
+filesystem[]
+apps[]
+self-hosting[]
+BUG:
+fix quirky keyboard scancode bug[]
