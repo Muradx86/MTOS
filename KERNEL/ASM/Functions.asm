@@ -6,6 +6,8 @@ global testif
 global KMemcpy
 global KMemset
 global ComplementBit
+global colorize
+global colorize_dbg
 testif:
 	push ebp
 	mov ebp,esp
@@ -87,4 +89,19 @@ ComplementBit:
 	movzx eax,al
 	btc dword [ebp+8],eax
 	pop ebp
+	ret
+colorize:
+	mov edi,0xb8000
+	mov ax,' ' | (0x7E << 8)
+	mov ecx,2000
+	cld
+	rep stosw
+	ret
+
+colorize_dbg:
+	mov edi,0xb8000
+	mov ax,0
+	mov ecx,4000
+	cld
+	rep stosb
 	ret
