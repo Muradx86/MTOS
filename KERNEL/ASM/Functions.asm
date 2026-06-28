@@ -8,6 +8,11 @@ global KMemset
 global ComplementBit
 global colorize
 global colorize_dbg
+global Sin
+global Cos
+global Round
+global Sqrt
+global ToU32
 testif:
 	push ebp
 	mov ebp,esp
@@ -104,4 +109,49 @@ colorize_dbg:
 	mov ecx,4000
 	cld
 	rep stosb
+	ret
+Sin:
+	push ebp
+	mov ebp,esp
+	fild dword [ebp+8]
+	fsin
+	frndint
+	fistp dword [ebp-12]
+	mov dword eax,[ebp-12]
+	pop ebp
+	ret
+Cos:
+	push ebp
+	mov ebp,esp
+	fild dword [ebp+8]
+	fcos
+	frndint
+	fistp dword [ebp-12]
+	mov dword eax,[ebp-12]
+	pop ebp
+	ret
+Round:
+	push ebp
+	mov ebp,esp
+	fild dword [ebp+8]
+	frndint 
+	fistp dword [ebp-12]
+	mov dword eax,[ebp-12]
+	pop ebp
+	ret
+Sqrt:
+	push ebp
+	mov ebp,esp
+	fild dword [ebp+8]
+	fsqrt
+	fistp dword [ebp-12]
+	mov dword eax,[ebp-12]
+	pop ebp
+	ret
+ToU32:
+	push ebp
+	mov ebp,esp
+	mov word ax,[ebp+8]
+	movzx eax,ax
+	pop ebp
 	ret
