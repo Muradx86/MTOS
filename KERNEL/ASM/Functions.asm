@@ -1,3 +1,4 @@
+;Std library
 global rdrandU8
 global rdrandU16
 global rdrandU32
@@ -97,7 +98,7 @@ ComplementBit:
 	ret
 colorize:
 	mov edi,0xb8000
-	mov ax,' ' | (0x7E << 8)
+	mov ax,' ' | (0x9F << 8)
 	mov ecx,2000
 	cld
 	rep stosw
