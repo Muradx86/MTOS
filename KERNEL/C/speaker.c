@@ -2,6 +2,7 @@
 #include "port.h"
 #include "pit.h"
 #include "util.h"
+typedef float F64;
 extern void random_hw();
 /* Notes macros */
 #define DO 100
@@ -13,24 +14,17 @@ extern void random_hw();
 #define SI 80
 #define LOW 76
 
-void soundTest(uint32_t freq){
+void soundTest(float freq){
 	outb(0x43,0xb6);
 	
 	uint8_t readset_status = inb(0x61);
 	readset_status |= 3;
 	outb(0x61,readset_status);
 	
-	uint32_t divider = FREQUENCY / freq;
+	float divider = FREQUENCY / freq;
 	
-	outb(0x42,(uint8_t)(divider) & 0xFF);
-	outb(0x42,(uint8_t)(divider >> 8));
-	//if is not equal to inital value, set again(H\L)
-	//uint8_t CheckStatus = inb(0x61);
-
-	/*if(CheckStatus != (inb(0x61) | 3)){
-		outb(0x61,(CheckStatus) | 3);
-	}
-	*/
+	outb(0x42,(uint8_t)divider & 0xFF);
+	outb(0x42,divider * 256);
 }
 
 void Do(void){
@@ -55,18 +49,20 @@ void stop_sound(void){
 }
 
 void wait(void){
-	static volatile uint32_t timeout = 1000000;
+	static volatile uint32_t timeout = 1000000000;
 	while(timeout) timeout--;
 }
 void readHymn(void)
 {
-	uint8_t random;
-	for(uint32_t i=0;i<0xFFFFFF;i+=2){
-		random=(randomU8());
-		if(random%2==0)
-			random=randomU16();
-		if(random==0)
-			continue;
-		soundTest(random);
+	int i;
+	while(1){
+		for(i=10;i<100;i+=5){
+			soundTest(i);
+			sleep(20000);
+		}
+		for(i=100;i>10;i-=5){
+			soundTest(i);
+			sleep(20000);
+		}
 	}
 }

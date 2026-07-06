@@ -1,41 +1,52 @@
-#include "C/idt.h"
+#include "idt.h"
 #include <stdint.h>
-#include "C/vga.h"
-#include "C/port.h"
-#include "C/pit.h"
-#include "C/speaker.h"
-//#include "keyboard.h"
-#include "C/util.h"
-#include "C/graphics.h"
-#include "C/externASM.h"
+#include "vga.h"
+#include "port.h"
+#include "pit.h"
+#include "speaker.h"
+#include "util.h"
+#include "graphics.h"
+#include "ExternASM.h"
 extern void id_mapping(void);
 extern void colorize(void);
 extern void testif(void);
 extern void enable_paging(void);
 extern void init_keyboard();
-extern void ShellInit(void);
+extern void shell_init(void);
 extern void mouse_init(void);
 extern void PMActive(void);
-
-void kernel(void){//The kernel is a fun zone also.
-	//PMActive();
-	outb(0x3f8,'K');
+extern uint8_t getch();
+extern void Destroy();
+extern void rom2ram();
+#undef NULL
+#define NULL (void *)(0)
+struct Node{
+	struct Node* next;
+	int val;
+};
+void kernel()
+{//The kernel is a fun zone also.
+	asm volatile
+	(".intel_syntax noprefix\n"
+	 "MOV EAX,CR0\n"
+	 "BTC EAX,5\n"
+	 "MOV CR0,EAX\n"
+	 "FINIT\n"
+	 ".att_syntax prefix"
+	);
+	setFrequency(100);
+	outb(0x3f8,'H');
 	load_idt();
-
+	Set0();
 	colorize();
 	init_keyboard();
-	//printa("SkyOS 1.0");
-	
 	//id_mapping();
-	*(volatile uint32_t*)0xDEADBEEF = 'f';
-	coordinate_print("[SYSTEM] Keyboard Initialized",0,0);
+	*(volatile uint8_t*)0xffffffffffff = 'f';
+	print("------------MTOS initialized!-----------\n");
 	mouse_init();
-	coordinate_print("[SYSTEM] Mouse Initialized",0,1);
-	coordinate_print("READY.",0,2);
-	//ShellInit();
-	init_cursor(0,15);
-	update_cursor(0,8);
+	print("------------Welcome MTOS 32-bit OS------\n");
+	init_cursor(2/*1*/,/*14*/20);
+	update_cursor(0,3);
 	outb(0x3d4,0xc);
-	
-	while(1){asm("HLT");}
+	while(1) asm volatile("HLT");
 }
