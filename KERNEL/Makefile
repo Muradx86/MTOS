@@ -4,7 +4,7 @@ LDSCR = linker.ld
 LD = ld
 ASFLAGS = -f elf32
 CFLAGS = -m32 -ffreestanding -fno-stack-protector -fno-pic -fno-pie \
-         -mno-sse -mno-sse2 -mno-mmx -mno-80387 \
+         -mno-sse -mno-sse2 -mno-mmx \
           -fno-builtin \
          -Wall -Wextra -O0
 
@@ -34,13 +34,12 @@ disk: $(bt1) $(bt2) $(BIN)
 	dd if=$(BIN) of=tst.img seek=10 conv=notrunc #CL = 11
 	
 qemu:
-	qemu-system-i386 -drive format=raw,file=tst.img,index=0,media=disk -audiodev pa,id=speaker \
-	-machine pcspk-audiodev=speaker \
-	-d int,cpu_reset -no-reboot -no-shutdown
+	qemu-system-x86_64 -cpu IvyBridge -drive format=raw,file=tst.img,index=0,media=disk -audiodev pa,id=speaker \
+	-machine pcspk-audiodev=speaker 
 qemu_gdb:
 	qemu-system-i386 -drive format=raw,file=tst.img,index=0,media=disk -audiodev pa,id=speaker \
 	-machine pcspk-audiodev=speaker \
-	-d int,cpu_reset -no-reboot -no-shutdown -s -S
+	-d int,cpu_reset -no-reboot -no-shutdown
 boot:
 	nasm -f bin BootHDD1.asm -o BootHDD1.bin
 	nasm -f bin BootHDD2.asm -o BootHDD2.bin
