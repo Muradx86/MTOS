@@ -1,18 +1,18 @@
 #include "vga.h"
 #include <stdint.h>
-#include <stddef.h>
+#include <stdbool.h>
 #include <stdarg.h>
 #include "util.h"
 #include "port.h"
+#include "ExternASM.h"
 #define WIDTH 80
 #define HEIGHT 25
-
-static volatile uint8_t line = 0;
-static volatile uint8_t column = 0;
-extern void colorize();
+struct Cursor{
+	int32_t line,column;
+};
+struct Cursor* Cursor;
 void init_cursor(uint8_t x,uint8_t y){
 	outb(0x3D4,0xA);
-	//outb(0x3D4,~(1<<5));
 	outb(0x3D5,x);
 	outb(0x3D4,0xB);
 	outb(0x3D5,y);
@@ -25,102 +25,88 @@ void update_cursor(uint16_t x,uint16_t y){
 	outb(0x3D5,(uint8_t)(addres >> 8));
 }
 void newline(void){
-	if(line <= HEIGHT - 1){
-		line++;
-		column = 0;
-		update_cursor(column,line);
-	}
-	else if(line == HEIGHT){
-		colorize();
-		line = 0; 
-		column = 0;
-		update_cursor(column,line);
+	if(Cursor->line <= HEIGHT - 3){
+		(Cursor->line)++;
+		Cursor->column = 0;
+		update_cursor(Cursor->column,Cursor->line);
+		return;
 	}
 }
-volatile uint16_t* vga_putchar(char c){//Mostly used for keyboard.
-	static volatile uint16_t* videomem = (volatile uint16_t*)0xb8280;
-	static volatile uint32_t vmem_dummy = 0xb8280;
-
+void putch(char c){
+	static volatile uint16_t* vga_mem = (volatile uint16_t*)0xb8000;
+	if(c=='\n')
+		newline();
+	vga_mem[WIDTH * (Cursor->line) + (Cursor->column)++] = c | (COLOR << 8);
+}
+void vga_putchar(char c){//Mostly used for keyboard.
+	static volatile uint16_t* videomem = (volatile uint16_t*)0xb8000;
 	switch (c){
 		case '\n':
 			newline();
-			break;
+			goto end;
 		case '\b':
-			videomem[((1 << 4) + (1 << 6)) * line + column] = ' ' | (COLOR << 8);
-			column--;
-			if(column == 0){
-				 line--;
-				 column = 80;
+			videomem[WIDTH * (Cursor->line) + (Cursor->column)] = ' ' | (COLOR << 8);
+			(Cursor->column)--;
+			if(Cursor->column == 0){
+				 (Cursor->line)--;
+				 Cursor->column = 80;
 			}
-			if(line < 0)
-				line = -line;
-			update_cursor(column-1,line+4);
+			if(Cursor->line < 0)
+				Cursor->line = -(Cursor->line);
+			update_cursor(Cursor->column,Cursor->line);
+			break;
+		case '\t':
+			Cursor->column += 4;
 			break;
 		case 0x4B:
-			column--;
-			if(column == 0){
-				line--;
-				column = 79;
+			Cursor->column--;
+			if(Cursor->column == 0){
+				(Cursor->line)--;
+				Cursor->column = 79;
 			}
 			break;
 		case 0x4D:
-			column++;
-			if(column == 79){
-				line++;
-				column = 0;
+			Cursor->column++;
+			if(Cursor->column == 79){
+				(Cursor->line)++;
+				Cursor->column = 0;
 			}
 			break;
 		case 0x48:
-			line--;
+			(Cursor->line)--;
 			break;
 		case 0x50:
-			line++;
+			(Cursor->line)++;
 			break;
 		default:
-			videomem[((1 << 4) + (1 << 6)) * line + column++] = c | (COLOR << 8);
-
-			if(column % WIDTH == 0){
-				 line++;
-				 column = 0;
+			putch(c);
+			if(Cursor->column == WIDTH){
+				 (Cursor->line)++;
+				 Cursor->column = 0;
 			}
-			update_cursor(column-1,line+4);
 			break;
 	}
-
-	if(line == 24){
-		colorize();
-		videomem = (uint16_t*)0xb8000;
-	}
-	update_cursor(column-1,line+4);
-	return videomem;
+end:
+	update_cursor(Cursor->column,Cursor->line);
 }
-void printa(char * c){
-	static volatile uint16_t* vga_mem = (volatile uint16_t*)0xb8000;
+void print(char * c){	
 	while(*c){
 		switch (*c){
 			case '\n':
 				newline();
 				break;
 			default:
-				vga_mem[((1 << 6) + (1 << 4))* line + column ++] = *c | ((COLOR | 0x80) << 8);
-				update_cursor(column,line);
+				putch(*c);
+				update_cursor(Cursor->column,Cursor->line);
 				break;
 		}
 		c++;
 	}
 }
-void puta(char c){
-	volatile uint16_t* vga = (volatile uint16_t*)0xb8000;
-	*vga++ = c | (0x30 << 8);
-}
-void putch(char c){
-	static volatile uint16_t* vga_mem = (volatile uint16_t*)0xb8000;
-	vga_mem[((1 << 6) + (1 << 4)) * line + column++] = c | ((COLOR | 0x80) << 8);
-}
 void printk(char* fmt,...){
 	uint32_t val32;
+	uint32_t clock;
 	char* string;
-	char array;
 	char* p;
 	va_list argp;
 	va_start(argp,fmt);
@@ -133,22 +119,21 @@ void printk(char* fmt,...){
 			case 'U':
 			case 'u':
 				val32 = va_arg(argp,uint32_t);
-				printa(utoa(val32,16));
+				print(utoa(val32,16));
 				break;
 			case '\n':
-				newline();
+				vga_putchar('\n');
 				break;
 			case 'S':
 			case 's':
 				string = va_arg(argp,char*);
-				printa(string);
+				print(string);
 				break;
-			/*case 'C':
-			case 'c':
-				array = va_arg(argp,char);
-				printa(array);
+			case 'D':
+			case 'd':
+				clock = va_arg(argp,uint32_t);
+				print(utoa(clock,10));
 				break;
-			*/
 			default:
 				putch(*p);
 				break;
@@ -158,12 +143,9 @@ void printk(char* fmt,...){
 }
 void coordinate_print(const char* s,uint32_t x,uint32_t y){
 	volatile uint16_t* videomem = (volatile uint16_t*)0xb8000;
-	uint8_t color = 0x8F;
-	if(*s == ' ') color = 0x30;
 	while(*s){
-		videomem[((1 << 6) + (1 << 4)) * y + x++] = *s++ | (color << 8);
+		videomem[WIDTH * y + x++] = *s++ | (COLOR << 8);
 	}
-	x = 0;
 }
 void drawSmiley(void){
 	volatile unsigned char* videomem = (volatile unsigned char*)0xb8140;
