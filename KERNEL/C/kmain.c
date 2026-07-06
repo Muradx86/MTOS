@@ -20,10 +20,6 @@ extern void Destroy();
 extern void rom2ram();
 #undef NULL
 #define NULL (void *)(0)
-struct Node{
-	struct Node* next;
-	int val;
-};
 void kernel()
 {//The kernel is a fun zone also.
 	asm volatile
