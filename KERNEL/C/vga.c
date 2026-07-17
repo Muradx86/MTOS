@@ -5,7 +5,14 @@
 #include "util.h"
 #include "port.h"
 #include "ExternASM.h"
-#define BUF_BACK 0x4000
+
+#define RED 0x4F
+#define BLACK 0x00
+#define GREEN 0x1F
+#define MAGENTA 0x5F
+#define YELLOW 0xEF
+
+#define BUF_SIZE 10
 #define WIDTH 80
 #define HEIGHT 25
 struct Cursor{
@@ -42,7 +49,7 @@ void putch(char c)
 	static volatile uint16_t* vga_mem = (volatile uint16_t*)0xb8000;
 	if(c=='\n')
 		newline();
-	vga_mem[WIDTH * (Cursor->line) + (Cursor->column)++] = c | (COLOR << 8);
+	vga_mem[WIDTH * Cursor->line + Cursor->column++] = c | (COLOR << 8);
 }
 void vga_putchar(char c)
 {//Mostly used for keyboard.
@@ -98,7 +105,7 @@ void vga_putchar(char c)
 	}
 	update_cursor(Cursor->column,Cursor->line);
 }
-void print(char * c)
+void print(char* c)
 {	
 	while(*c){
 		switch (*c){
@@ -190,4 +197,50 @@ void drawSmiley()
 		//piece 3
 		*(volatile uint8_t*)0xb828a = '0';
 		*(volatile uint8_t*)0xb828b = 0x0;
+}
+void PrintColor(char* s) //PrintColor("$RED$hi $GREEN$how are you");
+{
+	volatile uint16_t* videomem=(volatile uint16_t*)0xB8000;
+	char* ptr=s,color_buf[BUF_SIZE];
+	int hit=0,saw=0,i=0;
+	for(;*ptr;ptr++){ //Loop for finding color pattern. 
+		saw++;						
+		if(*ptr=='$'){
+			++ptr;
+			while(*ptr++!='$')
+				color_buf[i++]=*ptr; //Fill the buffer with color.
+			hit=2;
+			break;
+		}
+	}
+	if(hit<2)
+		goto DefPrint;
+	color_buf[i]='\0';
+	if(!(kstrcmp("RED",color_buf))){
+		while(ptr[saw++]){
+			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|RED;
+			update_cursor(Cursor->column,Cursor->line);
+		}
+	}
+	if(!(kstrcmp("GREEN",color_buf))){
+		while(ptr[saw++]){
+			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|GREEN;
+			update_cursor(Cursor->column,Cursor->line);
+		}
+	}
+	if(!(kstrcmp("BLACK",color_buf))){
+		while(ptr[saw++]){
+			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|BLACK;
+			update_cursor(Cursor->column,Cursor->line);
+		}
+	}	
+	if(!(kstrcmp("MAGENTA",color_buf))){
+		while(ptr[saw++]){
+			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|MAGENTA;
+			update_cursor(Cursor->column,Cursor->line);
+		}
+	}	
+DefPrint:
+	printk("%d\n",saw);
+	print(s); //Default color is 0x9F.
 }
