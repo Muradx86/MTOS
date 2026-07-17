@@ -7,8 +7,8 @@
 #include "ExternASM.h"
 
 #define RED 0x4F
-#define BLACK 0x00
-#define GREEN 0x1F
+#define BLACK 0x0F
+#define GREEN 0x2F
 #define MAGENTA 0x5F
 #define YELLOW 0xEF
 
@@ -176,7 +176,7 @@ void drawSmiley()
 	volatile unsigned char* videomem = (volatile unsigned char*)0xb8140;
 	volatile uint8_t eyes_times = 0;
 	for(volatile uint32_t index = 0;index < 2000;index++){
-		if((index % 0x140) == 0){
+		if(!(index % 0x140)){
 			videomem[index] = '0';
 			videomem[index + 1] = 0x0;
 			eyes_times++;
@@ -202,45 +202,43 @@ void PrintColor(char* s) //PrintColor("$RED$hi $GREEN$how are you");
 {
 	volatile uint16_t* videomem=(volatile uint16_t*)0xB8000;
 	char* ptr=s,color_buf[BUF_SIZE];
-	int hit=0,saw=0,i=0;
+	int saw=0,i=0,hit=0;
 	for(;*ptr;ptr++){ //Loop for finding color pattern. 
-		saw++;						
+		saw++;
 		if(*ptr=='$'){
+			hit++;
 			++ptr;
-			while(*ptr++!='$')
-				color_buf[i++]=*ptr; //Fill the buffer with color.
-			hit=2;
+			while(*ptr!='$'){
+				color_buf[i++]=*ptr;
+				ptr++;
+			}
 			break;
 		}
 	}
-	if(hit<2)
-		goto DefPrint;
-	color_buf[i]='\0';
+	color_buf[++i]='\0';
 	if(!(kstrcmp("RED",color_buf))){
-		while(ptr[saw++]){
-			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|RED;
+		while(*(ptr++ + saw)){
+			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(RED<<8);
 			update_cursor(Cursor->column,Cursor->line);
 		}
 	}
 	if(!(kstrcmp("GREEN",color_buf))){
-		while(ptr[saw++]){
-			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|GREEN;
+		while(*(ptr++ + saw)){
+			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(GREEN<<8);
 			update_cursor(Cursor->column,Cursor->line);
 		}
 	}
 	if(!(kstrcmp("BLACK",color_buf))){
-		while(ptr[saw++]){
-			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|BLACK;
+		while(*(ptr++ + saw)){
+				videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(BLACK<<8);
 			update_cursor(Cursor->column,Cursor->line);
 		}
 	}	
 	if(!(kstrcmp("MAGENTA",color_buf))){
-		while(ptr[saw++]){
-			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|MAGENTA;
+		while(*(ptr++ + saw)){
+			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(MAGENTA<<8);
 			update_cursor(Cursor->column,Cursor->line);
 		}
 	}	
-DefPrint:
-	printk("%d\n",saw);
-	print(s); //Default color is 0x9F.
+	return;
 }
