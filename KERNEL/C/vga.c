@@ -6,18 +6,16 @@
 #include "port.h"
 #include "ExternASM.h"
 
-#define RED 0x4F
-#define BLACK 0x0F
-#define GREEN 0x2F
-#define MAGENTA 0x5F
-#define YELLOW 0xEF
+#define RED      0x4F
+#define BLACK    0x0F
+#define GREEN    0x2F
+#define MAGENTA  0x5F
+#define YELLOW   0xCF
+#define BLUE     0x1F
 
 #define BUF_SIZE 10
-#define WIDTH 80
-#define HEIGHT 25
-struct Cursor{
-	int32_t line,column;
-};
+#define WIDTH    80
+#define HEIGHT   25
 struct Cursor* Cursor;
 void newline()
 {
@@ -198,7 +196,7 @@ void drawSmiley()
 		*(volatile uint8_t*)0xb828a = '0';
 		*(volatile uint8_t*)0xb828b = 0x0;
 }
-void PrintColor(char* s) //PrintColor("$RED$hi $GREEN$how are you");
+void printc(char* s) //PrintColor("$RED$hi $GREEN$how are you");
 {
 	volatile uint16_t* videomem=(volatile uint16_t*)0xB8000;
 	char* ptr=s,color_buf[BUF_SIZE];
@@ -230,7 +228,7 @@ void PrintColor(char* s) //PrintColor("$RED$hi $GREEN$how are you");
 	}
 	if(!(kstrcmp("BLACK",color_buf))){
 		while(*(ptr++ + saw)){
-				videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(BLACK<<8);
+			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(BLACK<<8);
 			update_cursor(Cursor->column,Cursor->line);
 		}
 	}	
@@ -239,6 +237,17 @@ void PrintColor(char* s) //PrintColor("$RED$hi $GREEN$how are you");
 			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(MAGENTA<<8);
 			update_cursor(Cursor->column,Cursor->line);
 		}
+	}
+	if(!(kstrcmp("BLUE",color_buf))){
+		while(*(ptr++ + saw)){
+			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(BLUE<<8);
+			update_cursor(Cursor->column,Cursor->line);
+		}
+	}
+	if(!(kstrcmp("YELLOW",color_buf))){
+		while(*(ptr++ + saw)){
+			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(YELLOW<<8);
+			update_cursor(Cursor->column,Cursor->line);
+		}
 	}	
-	return;
 }
