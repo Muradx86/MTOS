@@ -1,0 +1,12 @@
+global KMAlloc
+FindFree:
+	PUSH EBP
+	MOV EBP,ESP
+	MOV DWORD EDX,[EBP+8]
+	TEST EDX,EDX
+	JNZ @@1
+	MOV EAX,0
+	POP EBP
+	RET
+@@1:
+	
