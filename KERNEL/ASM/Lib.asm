@@ -1,0 +1,144 @@
+;Std library
+global rdrandU8
+global rdrandU16
+global rdrandU32
+global random_hw
+global testif
+global KMemcpy
+global KMemset
+global KMemsetW
+global ComplementBit
+global colorize
+global colorize_dbg
+global ToU32
+testif:
+	PUSH EBP
+	MOV EBP,ESP
+	XOR EDX,EDX
+	MOV EAX,1
+	CPUID
+	POP EBP
+	RET
+
+random_hw:
+	MOV EDI,0x8000
+	RDRAND AX
+	AND AX,0xff
+	MOV WORD [EDI],AX
+	RET
+
+rdrandU8:
+	PUSH EDI
+	PUSH EAX
+	MOV EDI,0x8000
+	RDRAND AX
+	AND AX,0xff
+	MOV BYTE [EDI],AL
+	POP EAX
+	POP EDI
+	RET
+
+rdrandU16:
+	PUSH EDI
+	PUSH EAX
+	MOV EDI,0x8000
+	RDRAND AX
+	MOV WORD [EDI],AX
+	POP EAX
+	POP EDI
+rdrandU32:
+	PUSH EDI
+	PUSH EAX
+	MOV EDI,0x8000
+	RDRAND EAX
+	MOV DWORD [EDI],EAX
+	POP EAX
+	POP EDI
+	RET
+
+KMemset:
+	PUSH EBP
+	MOV EBP,ESP
+	PUSH EAX
+	PUSH ECX
+	PUSH EDI
+	MOV Dword EDI,[EBP+8]
+	MOV EBX,EDI
+	MOV BYTE AL,[EBP+12]
+	MOV Dword ECX,[EBP+16]
+	REP STOSB
+	POP EDI
+	POP ECX
+	POP EAX
+	POP EBP
+	MOV EAX,EBX
+	RET
+
+KMemsetW:
+	PUSH EBP
+	MOV EBP,ESP
+	PUSH EAX
+	PUSH ECX
+	PUSH EDI
+	CLD
+	MOV Dword EDI,[EBP+8]
+	MOV EBX,EDI
+	MOV WORD AX,[EBP+12]
+	MOV Dword ECX,[EBP+16]
+	REP STOSW
+	POP EDI
+	POP ECX
+	POP EAX
+	POP EBP
+	MOV EAX,EBX
+	RET
+
+KMemcpy:
+	PUSH EBP
+	MOV EBP,ESP
+	PUSH EDI
+	PUSH ESI
+	PUSH ECX
+	MOV Dword ESI,[EBP+8]
+	MOV Dword EDI,[EBP+12]
+	MOV EAX,EDI
+	MOV Dword ECX,[EBP+16]
+	REP MOVSB
+	POP ECX
+	POP ESI
+	POP EDI
+	POP EBP
+	RET
+
+ComplementBit:
+	PUSH EBP
+	MOV EBP,ESP
+	MOV BYTE AL,[EBP+12]
+	MOVZX EAX,AL
+	BTC DWORD [EBP+8],EAX
+	POP EBP
+	RET
+
+colorize:
+	MOV EDI,0xb8000
+	MOV AX,' ' | (0x9F << 8)
+	MOV ECX,2000
+	CLD
+	REP STOSW
+	RET
+
+colorize_dbg:
+	MOV EDI,0xb8000
+	MOV AX,0
+	MOV ECX,4000
+	CLD
+	REP STOSB
+	RET
+
+ToU32:
+	PUSH EBP
+	MOV EBP,ESP
+	MOV WORD AX,[EBP+8]
+	MOVZX EAX,AX
+	POP EBP
+	RET
