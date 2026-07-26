@@ -48,9 +48,10 @@ void* FFMalloc(uint32_t request)
 }
 void* FFCalloc(uint32_t num,uint32_t size)
 {
+	if(!(num)||!(size))
+		return NULL;
 	uint8_t* Ptr=(uint8_t*)FFMalloc(num*size);
-	uint32_t temp;
-	for(temp=0;temp<size;temp++)
-		*(Ptr+temp)='A';
+	if(Ptr)
+		KMemset((void*)Ptr,0,num*size);
 	return (void*)(Ptr);
 }
