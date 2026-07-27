@@ -21,18 +21,20 @@ void FFHeapInit()
 }
 static Blk* FindBlk(uint32_t request)
 {
-	if(request>HEAP_END-HEAP_START)
+	if(request>HEAP_END-HEAP_START||Free->size<request)
 		return NULL;
 	while(Free){
-		if(Free->size>request&&Free->free){
+		if(Free->size>=request&&Free->free){
 			Free->free=false;
 			return Free;
 		}
 		Free=Free->next;
-	}	
+	}
 }
 static void SplitBlk(Blk** HeaderBlk,uint32_t request)
 {
+	if(!HeaderBlk) //Ignore null.
+		return;
 	(*HeaderBlk)->next=*HeaderBlk+request;
 	(*HeaderBlk)->next->free=true;
 	(*HeaderBlk)->next->size=(*HeaderBlk)->size-request;
@@ -40,6 +42,8 @@ static void SplitBlk(Blk** HeaderBlk,uint32_t request)
 }
 void* FFMalloc(uint32_t request)
 {	
+	if(!request)
+		return NULL;
 	NewBlk=FindBlk(request);
 	if(NewBlk==NULL)
 		return NULL;
@@ -48,10 +52,25 @@ void* FFMalloc(uint32_t request)
 }
 void* FFCalloc(uint32_t num,uint32_t size)
 {
-	if(!(num)||!(size))
+	if(!num||!size)
 		return NULL;
-	uint8_t* Ptr=(uint8_t*)FFMalloc(num*size);
+	Blk* Ptr=FFMalloc(num*size);
+	Blk* Temp=Ptr+sizeof(Temp);
 	if(Ptr)
-		KMemset((void*)Ptr,0,num*size);
+		KMemset(Temp,0,num*size);
 	return (void*)(Ptr);
+}
+void* FFRealloc(void* ptr,uint32_t newsize)
+{//TODO: After FFFree()
+	if(!newsize)
+		return ptr;
+	if(ptr==NULL)
+		return NULL;
+	Blk* temp=(Blk*)((char*)ptr-sizeof(NewBlk));  //Come to previous struct.
+	Blk** ResizeBlk=&temp;
+	ResizeBlk=KMemcpy((void*)(*ResizeBlk)->next,
+					  (void*)(*ResizeBlk)->next+newsize,
+					  sizeof(ResizeBlk));
+	(*ResizeBlk)->size=temp->next->size-newsize;
+	return NULL; //FIXME		
 }
