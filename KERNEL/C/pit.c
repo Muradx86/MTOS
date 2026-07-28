@@ -7,9 +7,9 @@ struct Data{
 	uint32_t Minute;
 	uint32_t Tick;
 };
-struct Data* Data;
 void Set0()
 {
+	struct Data* Data=(struct Data*)FFMalloc(sizeof(Data));
 	Data->Hour=0;
 	Data->Minute=0;
 	Data->Second=0;
