@@ -27,7 +27,7 @@ void kernel()
 	 "MOV EAX,CR0\n"
 	 "BTC EAX,5\n"
 	 "MOV CR0,EAX\n"
-	 "FINIT\n"
+	 "FNINIT\n"
 	 ".att_syntax prefix"
 	);
 	setFrequency(100);
