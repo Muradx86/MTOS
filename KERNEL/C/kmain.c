@@ -18,8 +18,7 @@ extern void PMActive(void);
 extern uint8_t getch();
 extern void Destroy();
 extern void rom2ram();
-#undef NULL
-#define NULL (void *)(0)
+
 void kernel()
 {//The kernel is a fun zone also.
 	asm volatile
