@@ -1,4 +1,5 @@
 OS:
+convert boot loader from CHS to LBA[]
 multitasking[]
 heap[]
 mouse[]
