@@ -5,12 +5,16 @@ global rdrandU32
 global random_hw
 global testif
 global KMemcpy
+global KMemcpyw
+global KMemcpyd
 global KMemset
-global KMemsetW
+global KMemsetw
+global KMemsetd
 global ComplementBit
 global colorize
 global colorize_dbg
 global ToU32
+global Reverse
 testif:
 	PUSH EBP
 	MOV EBP,ESP
@@ -46,6 +50,7 @@ rdrandU16:
 	MOV WORD [EDI],AX
 	POP EAX
 	POP EDI
+	
 rdrandU32:
 	PUSH EDI
 	PUSH EAX
@@ -62,10 +67,11 @@ KMemset:
 	PUSH EAX
 	PUSH ECX
 	PUSH EDI
-	MOV Dword EDI,[EBP+8]
+	CLD
+	MOV DWORD EDI,[EBP+8]
 	MOV EBX,EDI
 	MOV BYTE AL,[EBP+12]
-	MOV Dword ECX,[EBP+16]
+	MOV DWORD ECX,[EBP+16]
 	REP STOSB
 	POP EDI
 	POP ECX
@@ -74,7 +80,26 @@ KMemset:
 	MOV EAX,EBX
 	RET
 
-KMemsetW:
+KMemsetd:
+	PUSH EBP
+	MOV EBP,ESP
+	PUSH EAX
+	PUSH ECX
+	PUSH EDI
+	CLD
+	MOV Dword EDI,[EBP+8]
+	MOV EBX,EDI
+	MOV WORD AX,[EBP+12]
+	MOV Dword ECX,[EBP+16]
+	REP STOSD
+	POP EDI
+	POP ECX
+	POP EAX
+	POP EBP
+	MOV EAX,EBX
+	RET
+
+KMemsetw:
 	PUSH EBP
 	MOV EBP,ESP
 	PUSH EAX
@@ -104,6 +129,40 @@ KMemcpy:
 	MOV EAX,EDI
 	MOV Dword ECX,[EBP+16]
 	REP MOVSB
+	POP ECX
+	POP ESI
+	POP EDI
+	POP EBP
+	RET
+
+KMemcpyw:
+	PUSH EBP
+	MOV EBP,ESP
+	PUSH EDI
+	PUSH ESI
+	PUSH ECX
+	MOV Dword ESI,[EBP+8]
+	MOV Dword EDI,[EBP+12]
+	MOV EAX,EDI
+	MOV Dword ECX,[EBP+16]
+	REP MOVSW
+	POP ECX
+	POP ESI
+	POP EDI
+	POP EBP
+	RET
+
+KMemcpyd:
+	PUSH EBP
+	MOV EBP,ESP
+	PUSH EDI
+	PUSH ESI
+	PUSH ECX
+	MOV Dword ESI,[EBP+8]
+	MOV Dword EDI,[EBP+12]
+	MOV EAX,EDI
+	MOV Dword ECX,[EBP+16]
+	REP MOVSD
 	POP ECX
 	POP ESI
 	POP EDI
@@ -140,5 +199,45 @@ ToU32:
 	MOV EBP,ESP
 	MOV WORD AX,[EBP+8]
 	MOVZX EAX,AX
+	POP EBP
+	RET
+
+kstrlen:
+	PUSH EBP
+	MOV EBP,ESP
+	XOR ECX,ECX
+	LEA ESI,[EBP+8]
+@@0:
+	LODSB
+	TEST AL,AL
+	JZ @@@1
+	JMP @@0
+@@@1:
+	MOV EAX,ECX
+	POP EBP
+	RET
+
+Reverse:
+	PUSH EBP
+	MOV EBP,ESP
+	LEA ESI,[EBP+8]
+	MOV EDX,ESI
+	XOR ECX,ECX
+@@1:
+	LODSB
+	TEST AL,AL
+	JZ @@2
+	INC ECX
+	JMP @@1
+@@2:
+	MOV BYTE AL,[ESI-1]
+	STD
+@@3:
+	XCHG BYTE AL,[EDX]
+	LODSB
+	INC EDX
+	LOOP @@3
+	CLD
+	MOV DWORD EAX,[EBP+8]
 	POP EBP
 	RET
