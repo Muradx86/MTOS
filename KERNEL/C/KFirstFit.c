@@ -1,12 +1,12 @@
 #include "MAllocFree.h"
+#include "vga.h"
 #include "ExternASM.h"
-#include <stdbool.h>
-#define NULL	   (void*)0
+#define NULL	   (void(*))(0)
 #define HEAP_START 0x500000
 #define HEAP_END   0x900000
 typedef struct Block{
-	uint32_t size;
 	bool free;
+	uint32_t size;
 	struct Block* next;
 }Blk;
 Blk* Free;
@@ -25,20 +25,21 @@ static Blk* FindBlk(uint32_t request)
 		return NULL;
 	while(Free){
 		if(Free->size>=request&&Free->free){
-			Free->free=false;
 			return Free;
 		}
 		Free=Free->next;
 	}
+	return NULL;
 }
-static void SplitBlk(Blk** HeaderBlk,uint32_t request)
+static void ModifyBlk(Blk** HeaderBlk,uint32_t request)
 {
-	if(!HeaderBlk) //Ignore null.
+	if(!HeaderBlk)
 		return;
-	(*HeaderBlk)->next=*HeaderBlk+request;
+	(*HeaderBlk)->next=*(HeaderBlk)+request;
 	(*HeaderBlk)->next->free=true;
 	(*HeaderBlk)->next->size=(*HeaderBlk)->size-request;
 	(*HeaderBlk)->size=request;
+	(*HeaderBlk)->free=false;
 }
 void* FFMalloc(uint32_t request)
 {	
@@ -47,18 +48,20 @@ void* FFMalloc(uint32_t request)
 	NewBlk=FindBlk(request);
 	if(NewBlk==NULL)
 		return NULL;
-	SplitBlk(&NewBlk,request);	
-	return (void*)((char*)NewBlk+sizeof(NewBlk));
+	ModifyBlk(&NewBlk,request);	
+	return (void*)((char*)NewBlk+sizeof(NewBlk)+sizeof(NewBlk->next));
 }
 void* FFCalloc(uint32_t num,uint32_t size)
 {
 	if(!num||!size)
 		return NULL;
 	Blk* Ptr=FFMalloc(num*size);
-	Blk* Temp=Ptr+sizeof(Temp);
+	Blk* Temp=(Blk*)((char*)Ptr+sizeof(Temp)+sizeof(Temp->next));
 	if(Ptr)
 		KMemset(Temp,0,num*size);
-	return (void*)(Ptr);
+	else
+		return NULL;
+	return (void*)(Temp);
 }
 void* FFRealloc(void* ptr,uint32_t newsize)
 {//TODO: After FFFree()
@@ -73,4 +76,12 @@ void* FFRealloc(void* ptr,uint32_t newsize)
 					  sizeof(ResizeBlk));
 	(*ResizeBlk)->size=temp->next->size-newsize;
 	return NULL; //FIXME		
+}
+void FFFree(void* ptr)
+{
+	Blk* RootPtr=ptr-sizeof(RootPtr)-sizeof(RootPtr->next);  //Get root access on ptr.
+	if(RootPtr->free==true||!ptr)
+		return;
+	RootPtr->next=RootPtr->next->next;
+	RootPtr->free=true;
 }

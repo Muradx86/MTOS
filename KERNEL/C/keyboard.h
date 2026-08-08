@@ -3,5 +3,6 @@
 #include <stdint.h>
 void init_keyboard(void);
 void keyboard_handler(void);
-extern char FIFOBuf[80];
+void queu_start();
+char get_char();
 #endif

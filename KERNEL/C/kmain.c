@@ -1,24 +1,23 @@
 #include "idt.h"
 #include <stdint.h>
+#include <stdbool.h>
 #include "vga.h"
-#include "port.h"
 #include "pit.h"
+#include "port.h"
 #include "speaker.h"
 #include "util.h"
+#include "keyboard.h"
 #include "graphics.h"
 #include "ExternASM.h"
+#include "MAllocFree.h"
 extern void id_mapping(void);
 extern void colorize(void);
 extern void testif(void);
 extern void enable_paging(void);
-extern void init_keyboard();
+extern void keyboard_init();
 extern void shell_init(void);
 extern void mouse_init(void);
-extern void PMActive(void);
-extern uint8_t getch();
-extern void Destroy();
-extern void rom2ram();
-
+extern void alloc_test();
 void kernel()
 {//The kernel is a fun zone also.
 	asm volatile
@@ -29,19 +28,22 @@ void kernel()
 	 "FNINIT\n"
 	 ".att_syntax prefix"
 	);
-	setFrequency(100);
 	outb(0x3f8,'H');
 	load_idt();
 	Set0();
+	SetFrequency(100);
 	colorize();
-	init_keyboard();
+	keyboard_init();
 	//id_mapping();
-	*(volatile uint8_t*)0xffffffffffff = 'f';
-	print("------------MTOS initialized!-----------\n");
-	mouse_init();
-	print("------------Welcome MTOS 32-bit OS------\n");
-	init_cursor(2/*1*/,/*14*/20);
-	update_cursor(0,3);
+	*(volatile uint64_t*)0xffffffffffffffff = 'f';
+	print("------------------------------MTOS initialized!-----------------------------------\n");
+	//mouse_init();
+	print("----------------------------Welcome MTOS 32-bit OS------------------------------\n");
+	init_cursor(2,30);
+	update_cursor(0,2);
 	outb(0x3d4,0xc);
+	FFHeapInit();
+	queu_start();
+	__asm__("int $8");
 	while(1) asm volatile("HLT");
 }
