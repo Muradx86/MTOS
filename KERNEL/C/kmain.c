@@ -15,13 +15,13 @@ extern void colorize(void);
 extern void testif(void);
 extern void enable_paging(void);
 extern void keyboard_init();
-extern void shell_init(void);
+extern void term_start();
 extern void mouse_init(void);
 extern void alloc_test();
 void kernel()
 {//The kernel is a fun zone also.
-	asm volatile
-	(".intel_syntax noprefix\n"
+	__asm__ volatile(
+	".intel_syntax noprefix\n"
 	 "MOV EAX,CR0\n"
 	 "BTC EAX,5\n"
 	 "MOV CR0,EAX\n"
@@ -40,10 +40,11 @@ void kernel()
 	//mouse_init();
 	print("----------------------------Welcome MTOS 32-bit OS------------------------------\n");
 	init_cursor(2,30);
-	update_cursor(0,2);
 	outb(0x3d4,0xc);
 	FFHeapInit();
-	queu_start();
-	__asm__("int $8");
-	while(1) asm volatile("HLT");
+	printc("$RED$Write 'help' cmd for available cmds\n");
+	KMemcpyw((void*)0xB8140,(void*)0xB8000,40);
+	int a=1/0;
+//	term_start();
+	while(TRUE) asm volatile("HLT");
 }

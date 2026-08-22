@@ -14,7 +14,7 @@
 #define LCTRL 0x1D
 #define BKSPC 0xE
 #define ENTER 0x1C
-volatile char* queu;
+volatile char queu[2]={0};
 static volatile int queu_cnt;
 static const char lookup_norml[] = {
 	1,27,'1','2','3','4','5','6','7','8','9','0','-','=',
@@ -39,28 +39,26 @@ static const char lookup_shift[] = {
 	 '?',0,0,32,0,0,0xE3,0xE9,0,0,0,0,0,
 	0,0,0,0x48,0,0,0x4B,0,0x4D,0,0,0x50,0
 };
+bool kbd_has_key()
+{
+	if(inb(0x64)&2)
+		return TRUE;
+	else
+		return FALSE;
+}
 static inline void corner_print(uint8_t scancode,const char* tbl)
 {
 	*(volatile uint8_t*)0xB809E = tbl[scancode];
 	*(volatile uint8_t*)0xB809F = COLOR;
 }
-void queu_start()
-{
-	queu=(char*)FFCalloc(80,1);
-	queu_cnt=0;
-}
 void ins_queu(char scancode)
 {
-	queu[queu_cnt]=scancode;
-	queu_cnt++;
-	if(queu_cnt==80){
-		queu_cnt=0;
-		KMemset((void*)queu,0,80);
-	}
+	queu[0]=scancode;
 }
 char get_char()
 {
-	return queu[queu_cnt];
+	//return queu[0];
+	return (*(volatile char*)0xB809E);
 }
 bool shift_clicked = false;
 bool ctrl_clicked = false;
