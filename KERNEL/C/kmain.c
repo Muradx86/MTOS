@@ -39,12 +39,9 @@ void kernel()
 	print("------------------------------MTOS initialized!-----------------------------------\n");
 	//mouse_init();
 	print("----------------------------Welcome MTOS 32-bit OS------------------------------\n");
-	init_cursor(2,30);
-	outb(0x3d4,0xc);
+	init_cursor(4,30);
 	FFHeapInit();
-	printc("$RED$Write 'help' cmd for available cmds\n");
-	KMemcpyw((void*)0xB8140,(void*)0xB8000,40);
-	int a=1/0;
-//	term_start();
+	term_start();
+	
 	while(TRUE) asm volatile("HLT");
 }

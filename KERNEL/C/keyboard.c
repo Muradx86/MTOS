@@ -6,64 +6,78 @@
 #include "util.h"
 #include "ExternASM.h"
 #include "MAllocFree.h"
+#include "pit.h"
+
 #define PS2_SC 0x60
-#define PS2_R 0x64
+#define PS2_REG 0x64
 #define BREAK_CODE_NUM 0x80
 #define LSHIFT 0x2A
 #define RSHIFT 0x36
 #define LCTRL 0x1D
 #define BKSPC 0xE
 #define ENTER 0x1C
-volatile char queu[2]={0};
-static volatile int queu_cnt;
+
+volatile int i=0;
+volatile char queu[]={0};
+
 static const char lookup_norml[] = {
-	1,27,'1','2','3','4','5','6','7','8','9','0','-','=',
-	'\b',
-	'\t','q','w','e','r','t','y','u','i','o','p','[',']','\n',
-	0, 'a','s','d','f','g','h','j','k','l',
-	';',0x28,0,
-	0,43,'z','x','c','v','b','n','m',',','.',0,//53
-	0,0,0,0/*57*/,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0x48,0,0,0x4B,0,0x4D,0,0,0x50,0
+    0, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',
+    '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',
+    0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`',
+    0, '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 0,
+    '*', 0, ' ', 0
 };
+
 static const char lookup_shift[] = {
-	1,27,'!','@','#','$','%','^','&','*','(',')','_','+',
-	0,
-	0,'Q',     
-	'W','E','R','T','Y','U',
-	'I','O','P','{','}','\n',
-	0,'A','S','D',
-	'F','G','H','J','K','L',
-	':','"',0,
-	0,43,'Z','X','C','V','B','N','M','<','>','|',
-	 '?',0,0,32,0,0,0xE3,0xE9,0,0,0,0,0,
-	0,0,0,0x48,0,0,0x4B,0,0x4D,0,0,0x50,0
+    0, 27, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b',
+    '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n',
+    0, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '"', '~',
+    0, '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', 0,
+    '*', 0, ' ', 0
 };
-bool kbd_has_key()
+
+void kbd_sendcmd(uint8_t port,uint8_t cmd_byte)
 {
-	if(inb(0x64)&2)
-		return TRUE;
-	else
-		return FALSE;
+	if(!(inb(PS2_REG)&2)){
+		outb(port,cmd_byte);
+		return;
+	}
 }
+
+void keyboard_init(void)
+{
+	kbd_sendcmd(PS2_SC,0xF0);
+	kbd_sendcmd(PS2_REG,0x1); //Set table 1
+	kbd_sendcmd(PS2_SC,0xED); //Turn on LEDs
+}
+
 static inline void corner_print(uint8_t scancode,const char* tbl)
 {
 	*(volatile uint8_t*)0xB809E = tbl[scancode];
 	*(volatile uint8_t*)0xB809F = COLOR;
 }
-void ins_queu(char scancode)
+
+void push_queu(uint8_t c)
 {
-	queu[0]=scancode;
+	queu[i]=c;
+	i++;
 }
+
 char get_char()
 {
-	//return queu[0];
-	return (*(volatile char*)0xB809E);
+	uint8_t raw_sc;
+	if(KbdHasKey()){
+		raw_sc=inb(PS2_SC);
+		if(lookup_norml[raw_sc]&&raw_sc<128)
+			return lookup_norml[raw_sc];
+	}
 }
+
 bool shift_clicked = false;
 bool ctrl_clicked = false;
 bool backspace = false;
 bool caps_lock = false;
+
 void keyboard_handler()
 {	
 	volatile uint8_t scancode_tbl = inb(PS2_SC);
@@ -114,6 +128,5 @@ void keyboard_handler()
  		scancode_raw = lookup_norml[scancode_tbl];
 		vga_putchar(scancode_raw);
 		corner_print(scancode_tbl,lookup_norml);
-		ins_queu(scancode_raw);
  	}
 }
