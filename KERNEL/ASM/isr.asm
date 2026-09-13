@@ -12,18 +12,21 @@ global isr14
 global isr16
 global isr18
 global isr19
+global isr38
 
 global irq32
 global irq33
-global irq34
+global irq45
 
+extern get_char
 extern keyboard_handler
 extern mouse_handler
 extern IRQ32Handler
 extern InterruptHandler
 extern readHymn
 extern MOV_SPRITE
-;====SOFTWARE INTERRUPTS====
+extern debug_init
+;=================SOFTWARE INTERRUPTS======================
 isr0:
 	POP EAX
 	JMP ISR_CALL_NEC
@@ -34,9 +37,10 @@ isr7:
 	POP EAX
 	JMP ISR_CALL_NEC
 isr8:
-	ADD ESP,4
-	POP EAX
-	JMP ISR_CALL_EC
+	;ADD ESP,4
+	;POP EAX
+	;JMP ISR_CALL_EC
+	JMP DBG
 isr6:
 	ADD ESP,4
 	POP EAX
@@ -57,43 +61,56 @@ isr14:
 	ADD ESP,4
 	POP EAX
 	JMP ISR_CALL_EC
+
 isr16:
 	POP EAX
 	JMP ISR_CALL_NEC
+
 isr18:
 	ADD ESP,4
 	POP EAX
 	JMP ISR_CALL_EC
+
 isr19:
 	POP EAX
 	JMP ISR_CALL_NEC
+
 isr10:
 	ADD ESP,4
 	POP EAX
 	JMP ISR_CALL_EC
 
-;====HARDWARE INTERRUPTS====
+;===================HARDWARE INTERRUPTS==================
 irq32:
 	CALL IRQ32Handler
 	MOV AL,0x20
 	MOV DX,0x20
 	OUT DX,AL
 	IRETD
+	
 irq33:
 	CLI
-	CALL keyboard_handler
+;	CALL keyboard_handler
+	MOV EBX,0xB8000
+	MOV WORD [EBX],'I'|(0x9f<<8)
 	MOV AL,0x20
 	MOV DX,0x20
 	OUT DX,AL
 	STI
 	IRETD
-irq34:
+	
+irq45:
 	CLI
-	CALL keyboard_handler
+	CALL mouse_handler
 	MOV AL,0x20
 	MOV DX,0x20
 	OUT DX,AL
 	STI
+	IRETD
+
+DBG:
+	;MOV DWORD [ESP+4],debug_init
+	CALL debug_init
 	IRETD
 
 ISR_CALL_NEC:
@@ -105,12 +122,14 @@ ISR_CALL_NEC:
 	POP EBX
 	HLT
 	IRETD
-
 ISR_CALL_EC:
 	CLI
 	MOV EBX,0x9000
-	MOV [EBX],EAX
+	MOV DWORD [EBX],EAX
 	CALL InterruptHandler
 	HLT
 	ADD ESP,4
 	IRETD
+
+idle:
+	RET

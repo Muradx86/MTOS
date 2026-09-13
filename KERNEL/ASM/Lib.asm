@@ -1,21 +1,26 @@
 ;Std library
+global Bt
 global rdrandU8
 global rdrandU16
 global rdrandU32
 global random_hw
 global testif
-global KMemcpy
-global KMemcpyw
-global KMemcpyd
-global KMemset
-global KMemsetw
-global KMemsetd
+global MemCpy
+global MemCpyU16
+global MemCpyU32
+global MemSet
+global MemSetU16
+global MemSetU32
+global StrCpy
+global StrLen
 global ComplementBit
 global colorize
 global colorize_dbg
 global ToU32
 global Reverse
 global atoi
+global KbdHasKey
+
 testif:
 	PUSH EBP
 	MOV EBP,ESP
@@ -62,7 +67,7 @@ rdrandU32:
 	POP EDI
 	RET
 
-KMemset:
+MemSet:
 	PUSH EBP
 	MOV EBP,ESP
 	PUSH EAX
@@ -81,7 +86,7 @@ KMemset:
 	MOV EAX,EBX
 	RET
 
-KMemsetd:
+MemSetU32:
 	PUSH EBP
 	MOV EBP,ESP
 	PUSH EAX
@@ -100,7 +105,7 @@ KMemsetd:
 	MOV EAX,EBX
 	RET
 
-KMemsetw:
+MemSetU16:
 	PUSH EBP
 	MOV EBP,ESP
 	PUSH EAX
@@ -119,7 +124,7 @@ KMemsetw:
 	MOV EAX,EBX
 	RET
 
-KMemcpy:
+MemCpy:
 	PUSH EBP
 	MOV EBP,ESP
 	PUSH EDI
@@ -136,7 +141,7 @@ KMemcpy:
 	POP EBP
 	RET
 
-KMemcpyw:
+MemCpyU16:
 	PUSH EBP
 	MOV EBP,ESP
 	PUSH EDI
@@ -153,7 +158,7 @@ KMemcpyw:
 	POP EBP
 	RET
 
-KMemcpyd:
+MemCpyU32:
 	PUSH EBP
 	MOV EBP,ESP
 	PUSH EDI
@@ -203,15 +208,16 @@ ToU32:
 	POP EBP
 	RET
 
-kstrlen:
+StrLen:
 	PUSH EBP
 	MOV EBP,ESP
 	XOR ECX,ECX
-	LEA ESI,[EBP+8]
+	MOV DWORD ESI,[EBP+8]
 .@@0:
 	LODSB
-	TEST AL,AL
+	OR AL,AL
 	JZ .@@1
+	INC ECX
 	JMP .@@0
 .@@1:
 	MOV EAX,ECX
@@ -221,26 +227,18 @@ kstrlen:
 Reverse:
 	PUSH EBP
 	MOV EBP,ESP
-	LEA ESI,[EBP+8]
-	MOV EDX,ESI
-	XOR ECX,ECX
+	MOV DWORD EBX,[EBP+8]
+	PUSH EBX
+	CALL StrLen ;STRLEN IN EAX
+	MOV ECX,EAX 
+	POP EDX ;EBX
+	STD
 .@@1:
 	LODSB
-	TEST AL,AL
-	JZ .@@2
-	INC ECX
-	JMP .@@1
-.@@2:
-	DEC ESI
-	MOV BYTE AL,[ESI]
-	STD
-.@@3:
-	XCHG BYTE AL,[EDX]
-	LODSB
+	XCHG AL,[EDX]
 	INC EDX
-	LOOP .@@3
+	LOOP .@@1
 	CLD
-	MOV EAX,ESI
 	POP EBP
 	RET
 	
@@ -258,10 +256,53 @@ atoi:
 	JZ .@@2
 	SUB AL,'0'
 	MOVZX EAX,AL
-	IMUL ECX,ECX,10
+	IMUL ECX,10
 	ADD ECX,EAX
 	JMP .@@1
 .@@2:
 	MOV EAX,ECX
 	LEAVE
+	RET
+	
+StrCpy:
+	PUSH EBP
+	MOV EBP,ESP
+	MOV DWORD EDI,[EBP+8]
+	MOV DWORD ESI,[EBP+12]
+	CLD
+.@@1:
+	LODSB
+	TEST AL,AL
+	JZ .@@2
+	MOV BYTE [EDI],AL
+	INC EDI
+	JMP .@@1
+.@@2:
+	MOV DWORD EAX,[EBP+18]
+	POP EBP
+	RET
+
+read_flag:
+	PUSHFD
+	POP EAX
+	RET
+
+Bt:
+	PUSH EBP
+	MOV EBP,ESP
+	MOV DWORD ESI,[EBP+8]
+	MOV DWORD EAX,[EBP+12]
+	BT ESI,EAX
+	PUSHFD
+	POP EAX
+	AND EAX,(1<<0)
+	POP EBP
+	RET
+
+KbdHasKey: ;Kbd driver helper
+WLOOP:
+	IN AL,0x64
+	AND AL,1
+	JZ WLOOP
+	MOV EAX,1 ;Returns 1 when available
 	RET

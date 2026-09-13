@@ -1,8 +1,23 @@
+;Simple Math routines.
 global Sin
 global Cos
 global Round
 global Sqrt
-global PowOfTwo
+global Log2
+global Pow
+global Sqr
+global _Abs
+_Abs:
+	;Underscore for not mismatching NASM built-in func.
+	PUSH EBP
+	MOV EBP,ESP
+	FILD DWORD [EBP+8]
+	FABS
+	FISTP DWORD [EBP-12]
+	MOV DWORD EAX,[EBP-12]
+	POP EBP
+	RET
+	
 Sin:
 	PUSH EBP
 	MOV EBP,ESP
@@ -47,7 +62,7 @@ Sqrt:
 	POP EBP
 	RET
 
-PowOfTwo:
+Log2:
 	PUSH EBP
 	MOV EBP,ESP
 	FILD DWORD [EBP+8]
@@ -59,3 +74,40 @@ PowOfTwo:
 	MOV DWORD EAX,[EBP-12]
 	POP EBP
 	RET	
+
+Sqr:
+	;Square
+	PUSH EBP
+	MOV EBP,ESP
+	FILD DWORD [EBP+8]
+	FMUL ST0,ST0
+	FISTP DWORD [EBP-12]
+	MOV DWORD EAX,[EBP-12]
+	POP EBP
+	RET
+
+Pow:
+	;ECX=POWER EDX=NUM
+	PUSH EBP
+	MOV EBP,ESP
+	MOV DWORD EDX,[EBP+8]
+	TEST EDX,EDX ;Zero to power?
+	JZ @@1
+	CMP EDX,1 ;One to power?
+	JZ	@@2
+	MOV DWORD ECX,[EBP+12]
+	DEC ECX
+@@0:
+	IMUL DWORD EDX,[EBP+8]
+	LOOP @@0
+	MOV EAX,EDX
+	POP EBP
+	RET
+@@1:
+	MOV EAX,0
+	POP EBP
+	RET
+@@2:
+	MOV EAX,1
+	POP EBP
+	RET
