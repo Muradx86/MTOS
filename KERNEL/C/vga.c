@@ -141,7 +141,7 @@ void printk(char* fmt,...)
 			putch(*p);
 			continue;
 		}
-/*		if(digit(*++p)){
+		if(digit(*++p)){
 			char* ptr=p;
 			while(digit(*ptr)){
 				buf[j]=*ptr;
@@ -152,7 +152,6 @@ void printk(char* fmt,...)
 			p+=sizeof(buf);
 			Cursor->column+=atoi(buf);
 		}
-*/
 		switch (*++p){
 			case 'U':
 			case 'u':
