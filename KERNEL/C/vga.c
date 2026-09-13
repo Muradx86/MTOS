@@ -17,14 +17,18 @@
 #define WIDTH    80
 #define HEIGHT   25
 struct Cursor* Cursor;
+void scroll()
+{
+	MemCpy((void*)0xB8C80,(void*)(0xB8C80-160),80);
+}
 void newline()
 {
-	if(Cursor->line <= HEIGHT - 3){
+	if(Cursor->line <= HEIGHT){
 		Cursor->line++;
 		Cursor->column = 0;
 		update_cursor(Cursor->column,Cursor->line);
-		return;
-	}
+	}else
+		scroll();
 }
 void init_cursor(uint8_t x,uint8_t y)
 {
@@ -41,7 +45,6 @@ void update_cursor(uint16_t x,uint16_t y)
 	outb(0x3D4,0xE);
 	outb(0x3D5,(uint8_t)(addres >> 8));
 }
-
 void putch(char c)
 {
 	static volatile uint16_t* vga_mem = (volatile uint16_t*)0xb8000;
@@ -69,29 +72,6 @@ void vga_putchar(char c)
 			break;
 		case '\t':
 			Cursor->column += 4;
-			break;
-		case 0x4B:
-			Cursor->column--;
-			if(Cursor->column == 0){
-				Cursor->line--;
-				Cursor->column = 79;
-			}
-			break;
-		case 0x4D:
-			Cursor->column++;
-			if(Cursor->column == 79){
-				Cursor->line++;
-				Cursor->column = 0;
-			}
-			break;
-		case 0x48:
-			Cursor->line--;
-			break;
-		case 0x50:
-			Cursor->line++;
-			break;
-		case 0x39:
-			Cursor->column++;
 			break;
 		default:
 			putch(c);
@@ -141,7 +121,7 @@ void printk(char* fmt,...)
 			putch(*p);
 			continue;
 		}
-		if(digit(*++p)){
+/*		if(digit(*++p)){
 			char* ptr=p;
 			while(digit(*ptr)){
 				buf[j]=*ptr;
@@ -152,6 +132,7 @@ void printk(char* fmt,...)
 			p+=sizeof(buf);
 			Cursor->column+=atoi(buf);
 		}
+*/
 		switch (*++p){
 			case 'U':
 			case 'u':
@@ -226,37 +207,37 @@ void printc(char* s) //printc("$RED$Hello");
 		}
 	}
 	color_buf[i]='\0';
-	if(!(kstrcmp("RED",color_buf))){
+	if(!(StrCmp("RED",color_buf))){
 		while(*(ptr++ + saw)){
 			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(RED<<8);
 			update_cursor(Cursor->column,Cursor->line);
 		}
 	}
-	else if(!(kstrcmp("GREEN",color_buf))){
+	else if(!(StrCmp("GREEN",color_buf))){
 		while(*(ptr++ + saw)){
 			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(GREEN<<8);
 			update_cursor(Cursor->column,Cursor->line);
 		}
 	}
-	else if(!(kstrcmp("BLACK",color_buf))){
+	else if(!(StrCmp("BLACK",color_buf))){
 		while(*(ptr++ + saw)){
 			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(BLACK<<8);
 			update_cursor(Cursor->column,Cursor->line);
 		}
 	}	
-	else if(!(kstrcmp("MAGENTA",color_buf))){
+	else if(!(StrCmp("MAGENTA",color_buf))){
 		while(*(ptr++ + saw)){
 			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(MAGENTA<<8);
 			update_cursor(Cursor->column,Cursor->line);
 		}
 	}
-	else if(!(kstrcmp("BLUE",color_buf))){
+	else if(!(StrCmp("BLUE",color_buf))){
 		while(*(ptr++ + saw)){
 			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(BLUE<<8);
 			update_cursor(Cursor->column,Cursor->line);
 		}
 	}
-	else if(!(kstrcmp("RNDM",color_buf))){ //Rainbow print.
+	else if(!(StrCmp("RNDM",color_buf))){ //Rainbow print.
 		while(*(ptr++ + saw)){
 			uint8_t RNDM=randomU32()%0xFF; //See Lib.asm
 			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(RNDM<<8);
