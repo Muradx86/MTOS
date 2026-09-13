@@ -1,11 +1,11 @@
 OS:
 convert boot loader from CHS to LBA[]
 multitasking[]
-heap[]
+heap[x]
 mouse[]
-shell[]
+shell[x]
 filesystem[]
 apps[]
 self-hosting[]
 BUG:
-fix quirky keyboard scancode bug[]
+fix quirky keyboard scancode bug[x]
