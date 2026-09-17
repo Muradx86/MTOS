@@ -34,14 +34,15 @@ void kernel()
 	SetFrequency(100);
 	colorize();
 	keyboard_init();
-	//id_mapping();
+//	id_mapping();
 	*(volatile uint64_t*)0xffffffffffffffff = 'f';
 	print("------------------------------MTOS initialized!-----------------------------------\n");
 	//mouse_init();
 	print("----------------------------Welcome MTOS 32-bit OS------------------------------\n");
 	init_cursor(4,30);
 	FFHeapInit();
+	printc("$RED$Type help for commands");print("\n");
 	term_start();
-	
+
 	while(TRUE) asm volatile("HLT");
 }
