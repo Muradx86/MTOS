@@ -1,4 +1,6 @@
 OS:
+
+
 convert boot loader from CHS to LBA[]
 multitasking[]
 heap[x]
@@ -7,5 +9,4 @@ shell[x]
 filesystem[]
 apps[]
 self-hosting[]
-BUG:
-fix quirky keyboard scancode bug[x]
+Memory map INT 0x15
