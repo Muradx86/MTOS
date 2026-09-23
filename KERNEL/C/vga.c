@@ -44,6 +44,8 @@ void update_cursor(uint16_t x,uint16_t y)
 	outb(0x3D5,(uint8_t)(addres & 0xFF));
 	outb(0x3D4,0xE);
 	outb(0x3D5,(uint8_t)(addres >> 8));
+	Cursor->line=y;
+	Cursor->column=x;
 }
 void putch(char c)
 {
@@ -212,32 +214,27 @@ void printc(char* s) //printc("$RED$Hello");
 			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(RED<<8);
 			update_cursor(Cursor->column,Cursor->line);
 		}
-	}
-	else if(!(StrCmp("GREEN",color_buf))){
+	}else if(!(StrCmp("GREEN",color_buf))){
 		while(*(ptr++ + saw)){
 			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(GREEN<<8);
 			update_cursor(Cursor->column,Cursor->line);
 		}
-	}
-	else if(!(StrCmp("BLACK",color_buf))){
+	}else if(!(StrCmp("BLACK",color_buf))){
 		while(*(ptr++ + saw)){
 			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(BLACK<<8);
 			update_cursor(Cursor->column,Cursor->line);
 		}
-	}	
-	else if(!(StrCmp("MAGENTA",color_buf))){
+	}else if(!(StrCmp("MAGENTA",color_buf))){
 		while(*(ptr++ + saw)){
 			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(MAGENTA<<8);
 			update_cursor(Cursor->column,Cursor->line);
 		}
-	}
-	else if(!(StrCmp("BLUE",color_buf))){
+	}else if(!(StrCmp("BLUE",color_buf))){
 		while(*(ptr++ + saw)){
 			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(BLUE<<8);
 			update_cursor(Cursor->column,Cursor->line);
 		}
-	}
-	else if(!(StrCmp("RNDM",color_buf))){ //Rainbow print.
+	}else if(!(StrCmp("RNDM",color_buf))){ //Rainbow print.
 		while(*(ptr++ + saw)){
 			uint8_t RNDM=randomU32()%0xFF; //See Lib.asm
 			videomem[WIDTH*Cursor->line+Cursor->column++]=*ptr|(RNDM<<8);
