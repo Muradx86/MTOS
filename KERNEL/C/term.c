@@ -18,8 +18,7 @@ void cmd_fetch()
 	printk(" M M M   T   O   O  SSSS  \n");
 	printk(" M   M   T   O   O     S  \n");
 	printk(" M   M   T    OOO  SSSSS  \n\n");
-	printc("$GREEN$Allocated memory -");printk(" %d\n",MaxAlloc);
-	printc("$GREEN$Free- ");printk(" %d \n",0x400000-MaxAlloc);
+	printc("$GREEN$Installed memory(MB) -");printk("%d\n",*(volatile uint32_t*)0x9000);
 }
 
 void cmd_info_registers()
@@ -89,7 +88,7 @@ void readline()
 	j=0;
 	MemSet((void*)buf,0,80);
 	while(TRUE){
-		c=get_char();
+		c=getchar2();
 		switch(c){
 			case '\n':
 				vga_putchar('\n');
@@ -117,7 +116,7 @@ void parse_cmd(char* c)
 	c[j]=0;
 
 	if(StrCmp("help",c)==0)
-		print("Available commands: help, mtosfetch, whereami, reboot\n");	
+		print("Available commands: help, mtosfetch, whereami, reboot, beep, cls\n");	
 	else if(StrCmp("mtosfetch",c)==0)
 		cmd_fetch();
 	else if(StrCmp("beep",c)==0)
@@ -129,7 +128,7 @@ void parse_cmd(char* c)
 	else if(StrCmp("whereami",c)==0)
 		cmd_whereami();
 	else if(StrCmp("cls",c)==0)
-		cmd_cls();
+		cmd_cls();	
 	else
 		printk("Unknown cmd:%s\n",buf);
 }
