@@ -21,11 +21,11 @@ volatile int i=0;
 volatile char queu[]={0};
 
 static const char lookup_norml[] = {
-    0, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',
+    1, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',
     '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',
-    0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`',
-    0, '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 0,
-    '*', 0, ' ', 0
+    1, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`',
+    1, '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 1,
+    '*', 1, ' ', 1
 };
 
 static const char lookup_shift[] = {
@@ -62,71 +62,32 @@ void push_queu(uint8_t c)
 	queu[i]=c;
 	i++;
 }
+bool shift_clicked=false;
+char getchar()
+{
+	while(!KbdHasKey());
+	char raw_sc=inb(PS2_SC);
+	if(raw_sc==RSHIFT||raw_sc==LSHIFT)
+		shift_clicked=true;
+	if(raw_sc<127&&!(raw_sc&0x80)){
+		if(shift_clicked){
+			shift_clicked=false;
+			return lookup_shift[(int)raw_sc];
+		}
+		return lookup_norml[(int)raw_sc];
+	}
+	else 
+		return 0;
+}
 
 char get_char()
 {
 	uint8_t raw_sc;
+	bool clicked;
 	if(KbdHasKey()){
 		raw_sc=inb(PS2_SC);
-		if(lookup_norml[raw_sc]&&raw_sc<128)
+		clicked=!(raw_sc&0x80);
+		if(lookup_norml[raw_sc]!=0&&raw_sc<0x80&&clicked)
 			return lookup_norml[raw_sc];
 	}
-}
-
-bool shift_clicked = false;
-bool ctrl_clicked = false;
-bool backspace = false;
-bool caps_lock = false;
-
-void keyboard_handler()
-{	
-	volatile uint8_t scancode_tbl = inb(PS2_SC);
-	volatile uint8_t scancode_raw;
-	
-	bool clicked = !(scancode_tbl & BREAK_CODE_NUM);	
-
-	switch (scancode_tbl){//Rshift 0x36 Lshift 0x2A
-		case LSHIFT:
-			shift_clicked = clicked; 
-			break;
-		case RSHIFT:
-			shift_clicked = clicked; 
-			break;
-		case 0xAA:
-			shift_clicked = false;
-			break;
-		case 0xB6:
-			shift_clicked = false;
-			break;
-		case LCTRL:
-			ctrl_clicked = clicked;
-			break;
-		case 0x9D:
-			ctrl_clicked = false;
-			 break;
-		case 0xE:
-			backspace = clicked; 
-			break;
-		case 0x8E:
-			backspace = false; 
-			break;
-		case 0x3A:
-			caps_lock = true;
-			break;
-		case 0xBA:
-			caps_lock = false;
-			break;
-		default:
-			break;
-	}
- 	if(clicked && shift_clicked && scancode_tbl != LSHIFT && scancode_tbl != RSHIFT){//Shift letters
- 		scancode_raw = lookup_shift[scancode_tbl]; 		
-		vga_putchar(scancode_raw);
-		corner_print(scancode_tbl,lookup_shift);
- 	}
- 	else if(clicked && scancode_tbl != LSHIFT && scancode_tbl != LCTRL && scancode_tbl!=RSHIFT){//Normal letters
- 		scancode_raw = lookup_norml[scancode_tbl];
-		vga_putchar(scancode_raw);
-		corner_print(scancode_tbl,lookup_norml);
- 	}
 }

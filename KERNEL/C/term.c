@@ -8,6 +8,7 @@
 #define MAX_CHAR 80
 
 extern uint32_t MaxAlloc;
+extern bool shift_clicked;
 char buf[MAX_CHAR];
 int j;
 
@@ -87,8 +88,9 @@ void readline()
 	char c;
 	j=0;
 	MemSet((void*)buf,0,80);
+	shift_clicked=false;
 	while(TRUE){
-		c=getchar2();
+		c=getchar();
 		switch(c){
 			case '\n':
 				vga_putchar('\n');
@@ -102,7 +104,7 @@ void readline()
 				vga_putchar('\t');
 				break;
 			default:
-				if(j<MAX_CHAR-1&&!(c&0x80)){
+				if(j<MAX_CHAR-1&&c){
 					vga_putchar(c);
 					buf[j++]=c;
 				}
