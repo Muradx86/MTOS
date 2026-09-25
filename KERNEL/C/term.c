@@ -72,6 +72,16 @@ void cmd_cls()
 	update_cursor(CCursor.column,CCursor.line);
 }
 
+void cmd_echo(char* buf,int idx)
+{
+	char temp[60];
+	int xx;
+	for(xx=0;buf[idx];idx++,xx++)
+		temp[xx]=buf[idx];
+	temp[xx]='\0';
+	printk("%s\n",temp);
+}
+
 uint32_t parse_hex(char* s)
 {
 	char hex_buf[]={0};
@@ -130,7 +140,9 @@ void parse_cmd(char* c)
 	else if(StrCmp("whereami",c)==0)
 		cmd_whereami();
 	else if(StrCmp("cls",c)==0)
-		cmd_cls();	
+		cmd_cls();
+	else if(StrnCmp("echo",c,3)==0)
+		cmd_echo(buf,5);	
 	else
 		printk("Unknown cmd:%s\n",buf);
 }
