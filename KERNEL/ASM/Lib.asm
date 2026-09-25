@@ -19,7 +19,6 @@ global colorize_dbg
 global ToU32
 global Reverse
 global atoi
-global KbdHasKey
 
 testif:
 	PUSH EBP
@@ -297,12 +296,4 @@ Bt:
 	POP EAX
 	AND EAX,(1<<0)
 	POP EBP
-	RET
-
-KbdHasKey: ;Kbd driver helper
-WLOOP:
-	IN AL,0x64
-	AND AL,1
-	JZ WLOOP
-	MOV EAX,1 ;Returns 1 when available
 	RET
