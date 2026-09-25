@@ -6,6 +6,7 @@
 #define HEAP_START 0x500000
 #define HEAP_END   0x900000
 uint32_t MaxAlloc;
+
 typedef struct Block{
 	bool free;
 	uint32_t size;
@@ -70,6 +71,7 @@ void* FFCalloc(uint32_t num,uint32_t size)
 		MemSet(Temp,0,num*size);
 	else
 		return NULL;
+	MaxAlloc+=(num*size);
 	return (void*)(Temp);
 }
 
@@ -95,4 +97,5 @@ void FFFree(void* ptr)
 		return;
 	RootPtr->next=RootPtr->next->next;
 	RootPtr->free=true;
+	MaxAlloc-=RootPtr->size;
 }
