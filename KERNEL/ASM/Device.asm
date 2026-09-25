@@ -5,8 +5,8 @@ global remap_pic
 KbdHasKey:
 WLOOP:
 	 IN AL,0x60
-    AND AL,1
-    	JZ WLOOP
+  AND AL,1
+  	JZ WLOOP
   MOV EAX,1
     	RET
 
