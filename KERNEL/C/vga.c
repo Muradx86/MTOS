@@ -123,18 +123,6 @@ void printk(char* fmt,...)
 			putch(*p);
 			continue;
 		}
-/*		if(digit(*++p)){
-			char* ptr=p;
-			while(digit(*ptr)){
-				buf[j]=*ptr;
-				ptr++;
-				j++;
-			}
-			buf[j]='\0';
-			p+=sizeof(buf);
-			Cursor->column+=atoi(buf);
-		}
-*/
 		switch (*++p){
 			case 'U':
 			case 'u':
