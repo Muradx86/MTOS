@@ -74,7 +74,7 @@ void cmd_cls()
 void cmd_echo(char* buf,int idx)
 {
 	char temp[60];
-	int xx;
+	uint32_t xx;
 	for(xx=0;buf[idx];idx++,xx++)
 		temp[xx]=buf[idx];
 	temp[xx]='\0';
@@ -84,12 +84,29 @@ void cmd_echo(char* buf,int idx)
 void cmd_peek(char* buf,int idx)
 {
 	char temp[32];
-	int xx;
+	uint32_t xx;
 	for(xx=0;buf[idx];xx++,idx++)
 		temp[xx]=buf[idx];
 	temp[xx]='\0';
 	uint32_t addres=atoi(temp);
 	printk("0x%u\n",*(volatile uint32_t*)addres);
+}
+
+void cmd_poke(char* buf,int idx)
+{
+	char memory[32];
+	char value[32];
+	uint32_t xx,v,m;
+	for(xx=0;buf[idx]!=' ';idx++,xx++)
+		memory[xx]=buf[idx];
+	memory[xx]='\0';
+	idx+=2;
+	for(xx=0;buf[idx];idx++,xx++)
+		value[xx]=buf[idx];
+	value[xx]='\0';
+	v=atoi(value);
+	m=atoi(memory);
+	*(volatile uint16_t*)m=v; //Finish em!
 }
 
 void readline()
@@ -127,7 +144,7 @@ void parse_cmd(char* c)
 	c[j]=0;
 
 	if(StrCmp("help",c)==0)
-		print("Available commands: help, mtosfetch, whereami, reboot, beep, cls,peek,insmem\n");	
+		print("Available commands: help mtosfetch whereami echo\n reboot beep cls peek poke insmem\n");	
 	else if(StrCmp("mtosfetch",c)==0)
 		cmd_fetch();
 	else if(StrCmp("beep",c)==0)
@@ -144,6 +161,8 @@ void parse_cmd(char* c)
 		cmd_echo(buf,5);	
 	else if(StrnCmp("peek",c,3)==0)
 		cmd_peek(buf,5);
+	else if(StrnCmp("poke",c,3)==0)
+		cmd_poke(buf,5);
 	else if(StrCmp("insmem",c)==0){
 		printc("$GREEN$Installed memory(MB) -");
 		printk("%d\n",*(volatile uint32_t*)0x9000);
