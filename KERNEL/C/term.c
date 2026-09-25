@@ -19,7 +19,6 @@ void cmd_fetch()
 	printk(" M M M   T   O   O  SSSS  \n");
 	printk(" M   M   T   O   O     S  \n");
 	printk(" M   M   T    OOO  SSSSS  \n\n");
-	printc("$GREEN$Installed memory(MB) -");printk("%d\n",*(volatile uint32_t*)0x9000);
 }
 
 void cmd_info_registers()
@@ -82,15 +81,15 @@ void cmd_echo(char* buf,int idx)
 	printk("%s\n",temp);
 }
 
-uint32_t parse_hex(char* s)
+void cmd_peek(char* buf,int idx)
 {
-	char hex_buf[]={0};
-	int i=2,j=0;
-	if(s[0]!='0'&&s[1]!='x')
-		return 0;
-	while(s[i])
-		hex_buf[j++]=s[i++];
-	return	atoi(utoa(atoi(hex_buf),10));	
+	char temp[32];
+	int xx;
+	for(xx=0;buf[idx];xx++,idx++)
+		temp[xx]=buf[idx];
+	temp[xx]='\0';
+	uint32_t addres=atoi(temp);
+	printk("0x%u\n",*(volatile uint32_t*)addres);
 }
 
 void readline()
@@ -128,7 +127,7 @@ void parse_cmd(char* c)
 	c[j]=0;
 
 	if(StrCmp("help",c)==0)
-		print("Available commands: help, mtosfetch, whereami, reboot, beep, cls\n");	
+		print("Available commands: help, mtosfetch, whereami, reboot, beep, cls,peek,insmem\n");	
 	else if(StrCmp("mtosfetch",c)==0)
 		cmd_fetch();
 	else if(StrCmp("beep",c)==0)
@@ -143,6 +142,12 @@ void parse_cmd(char* c)
 		cmd_cls();
 	else if(StrnCmp("echo",c,3)==0)
 		cmd_echo(buf,5);	
+	else if(StrnCmp("peek",c,3)==0)
+		cmd_peek(buf,5);
+	else if(StrCmp("insmem",c)==0){
+		printc("$GREEN$Installed memory(MB) -");
+		printk("%d\n",*(volatile uint32_t*)0x9000);
+	}
 	else
 		printk("Unknown cmd:%s\n",buf);
 }
