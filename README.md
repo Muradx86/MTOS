@@ -1,1 +1,1 @@
-It is an OS written by Murad Jabiyev. It is bare-machine oriented with powerful terminal, where you can directly use assembly soon. There is no PROTECTION! Everything runs on the highest PRIVILEGE.
+It is a terminal where you can send low level commands
