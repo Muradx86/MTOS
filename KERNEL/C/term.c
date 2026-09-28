@@ -7,6 +7,12 @@
 #include "MAllocFree.h"
 #define MAX_CHAR 80
 
+typedef struct Cmd{
+	char* cmd;
+	struct Cmd* next;
+}CmdCtrl;
+CmdCtrl* CmdHistory;
+
 extern uint32_t MaxAlloc;
 extern bool shift_clicked;
 char buf[MAX_CHAR];
@@ -85,18 +91,20 @@ void cmd_peek(char* buf,int idx)
 {
 	char temp[32];
 	uint32_t xx;
+
 	for(xx=0;buf[idx];xx++,idx++)
 		temp[xx]=buf[idx];
 	temp[xx]='\0';
-	uint32_t addres=atoi(temp);
+	
+	uint32_t addres=Hex2Dec(temp);
 	printk("0x%u\n",*(volatile uint32_t*)addres);
 }
 
 void cmd_poke(char* buf,int idx)
 {
-	char memory[32];
-	char value[32];
+	char memory[32],value[32];
 	uint32_t xx,v,m;
+
 	for(xx=0;buf[idx]!=' ';idx++,xx++)
 		memory[xx]=buf[idx];
 	memory[xx]='\0';
@@ -104,8 +112,9 @@ void cmd_poke(char* buf,int idx)
 	for(xx=0;buf[idx];idx++,xx++)
 		value[xx]=buf[idx];
 	value[xx]='\0';
-	v=atoi(value);
-	m=atoi(memory);
+	
+	v=Hex2Dec(value);
+	m=Hex2Dec(memory);
 	*(volatile uint16_t*)m=v; //Finish em!
 }
 
@@ -113,7 +122,7 @@ void readline()
 {
 	char c;
 	j=0;
-	MemSet((void*)buf,0,80);
+	MemSetU16((void*)buf,0,5);
 	shift_clicked=false;
 	while(TRUE){
 		c=getchar();
@@ -128,7 +137,7 @@ void readline()
 				break;
 			case '\t':
 				vga_putchar('\t');
-				break;
+				break;			
 			default:
 				if(j<MAX_CHAR-1&&c){
 					vga_putchar(c);
@@ -144,7 +153,7 @@ void parse_cmd(char* c)
 	c[j]=0;
 
 	if(StrCmp("help",c)==0)
-		print("Available commands: help mtosfetch whereami echo\n reboot beep cls peek poke insmem\n");	
+		print("Available commands:\n help mtosfetch whereami echo\n reboot beep cls peek poke insmem\n");	
 	else if(StrCmp("mtosfetch",c)==0)
 		cmd_fetch();
 	else if(StrCmp("beep",c)==0)
@@ -173,6 +182,8 @@ void parse_cmd(char* c)
 
 void term_start()
 {
+	CmdHistory=FFMalloc(sizeof(CmdCtrl*));
+	CmdHistory->next=NULL;
 	while(TRUE){
 		print("~# ");
 		readline();
