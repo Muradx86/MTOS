@@ -108,14 +108,31 @@ void cmd_poke(char* buf,int idx)
 	for(xx=0;buf[idx]!=' ';idx++,xx++)
 		memory[xx]=buf[idx];
 	memory[xx]='\0';
-	idx+=2;
+	idx+=1;
 	for(xx=0;buf[idx];idx++,xx++)
 		value[xx]=buf[idx];
 	value[xx]='\0';
 	
 	v=Hex2Dec(value);
 	m=Hex2Dec(memory);
-	*(volatile uint16_t*)m=v; //Finish em!
+	*(volatile uint8_t*)m=v; //Finish em!
+}
+
+void cmd_jmp(char* buf,int idx)
+{//Doesn't automatically RET!
+	char memory_area[32];
+	uint32_t xx,mem32;
+	for(xx=0;buf[idx];idx++,xx++)
+		memory_area[xx]=buf[idx];
+	memory_area[xx]='\0';
+	mem32=Hex2Dec(memory_area);
+	__asm__ volatile(
+		".intel_syntax noprefix\n"
+		"JMP %0\n"
+		".att_syntax prefix"
+		:
+		:"r"(mem32)
+	);
 }
 
 void readline()
@@ -125,6 +142,9 @@ void readline()
 	MemSetU16((void*)buf,0,5);
 	shift_clicked=false;
 	while(TRUE){
+		__asm__ volatile(
+			"PAUSE"
+		);
 		c=getchar();
 		switch(c){
 			case '\n':
@@ -153,7 +173,7 @@ void parse_cmd(char* c)
 	c[j]=0;
 
 	if(StrCmp("help",c)==0)
-		print("Available commands:\n help mtosfetch whereami echo\n reboot beep cls peek poke insmem\n");	
+		print("Available commands:\n help mtosfetch whereami cout\n reboot beep cls peek poke insmem jmp\n");	
 	else if(StrCmp("mtosfetch",c)==0)
 		cmd_fetch();
 	else if(StrCmp("beep",c)==0)
@@ -166,12 +186,14 @@ void parse_cmd(char* c)
 		cmd_whereami();
 	else if(StrCmp("cls",c)==0)
 		cmd_cls();
-	else if(StrnCmp("echo",c,3)==0)
+	else if(StrnCmp("cout",c,3)==0)
 		cmd_echo(buf,5);	
 	else if(StrnCmp("peek",c,3)==0)
 		cmd_peek(buf,5);
 	else if(StrnCmp("poke",c,3)==0)
 		cmd_poke(buf,5);
+	else if(StrnCmp("jmp",c,2)==0)
+		cmd_jmp(buf,4);
 	else if(StrCmp("insmem",c)==0){
 		printc("$GREEN$Installed memory(MB) -");
 		printk("%d\n",*(volatile uint32_t*)0x9000);
@@ -185,6 +207,9 @@ void term_start()
 	CmdHistory=FFMalloc(sizeof(CmdCtrl*));
 	CmdHistory->next=NULL;
 	while(TRUE){
+		__asm__ volatile(
+			"PAUSE"
+		);
 		print("~# ");
 		readline();
 		if(j>0)
